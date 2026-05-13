@@ -532,12 +532,13 @@ def strategy1_sanity_check(N: int = 8, seed: int = SEED) -> None:
 #       contributes: the QAOA distribution concentrates probability mass
 #       near low-E sequences, so the seed pool is dramatically better
 #       than uniform random.
-#   3.  From each seed, run a 1-flip Tabu local search on E(s) directly.
+#   3.  From each seed, run a 1+2-flip Tabu local search on E(s) directly.
 #       The tabu list forbids re-flipping a bit for `tenure` steps; an
 #       "aspiration" rule allows a tabu move if it strictly improves the
-#       global best.  Each step evaluates all N single-flip neighbours,
-#       picks the best non-tabu (or aspirational) move, and stops when
-#       no move improves the local best for `patience` consecutive steps.
+#       global best. Each step evaluates all allowed 1- and 2-bit-flip
+#       neighbours, picks the best non-tabu (or aspirational) move, and
+#       stops when no move improves the local best for `patience` consecutive
+#       steps.
 #
 # Cost accounting (PDF definition: N_eval = quantum circuit evaluations):
 #   * Steps (1)+(2) inherit the QAOA n_eval count.
@@ -913,7 +914,7 @@ of H_C^LABS.  The second strategy is a quantum-enhanced hybrid that
 directly attacks the benchmark target (r >= 0.85 within N_eval <= 5000),
 using Strategy 1's quantum samples as informed seeds for a classical
 local search.  Part (c) additionally compares against two required
-baselines: uniform random sampling with the same total shot budget,
+baselines: uniform random sampling with the full assignment shot-budget cap,
 and a purely classical solver (simulated annealing / Tabu search).
 
   Strategy 1: Quartic-Hamiltonian QAOA  (problem-aware quantum ansatz)
@@ -940,9 +941,11 @@ and a purely classical solver (simulated annealing / Tabu search).
   After Strategy 1 converges we collect the bitstring samples drawn
   from each optimised QAOA circuit (across p = 1, 2, 3), deduplicate,
   rank by E(s) ascending, and use the top-K lowest-E samples as seeds
-  for a 1-flip Tabu local search on E(s) directly.  The tabu list
-  forbids re-flipping the same bit for `tenure` steps; an aspiration
-  rule allows a tabu move that strictly improves the global best.
+    for a 1+2-flip Tabu local search on E(s) directly.  The tabu list
+    forbids re-flipping touched bits for `tenure` steps; an aspiration
+    rule allows a tabu move that strictly improves the global best.  This
+    extends the 1-flip inner Tabu move in Ref [6] with a Hamming-2
+    neighbourhood that was necessary on our N=20 instance.
   The role of the quantum component is to bias the seed distribution
   away from the uniform Hamming weight = N/2 typical of random restarts
   -- the QAOA circuit concentrates probability mass near low-E sequences,
@@ -952,7 +955,7 @@ and a purely classical solver (simulated annealing / Tabu search).
 
   Cost accounting matches the PDF definition: N_eval counts QUANTUM
   circuit evaluations only.  The QAOA seeding inherits its own n_eval
-  (~1300 for the N=20 production run); the classical Tabu loop is free
+    (~3600 for the N=20 production run); the classical Tabu loop is free
   under that budget but we report its evaluation count separately for
   full transparency.
 
@@ -1355,13 +1358,14 @@ def run_part_c(
           f"   [+{hybrid.n_eval_classical} classical evals]")
 
     # Random -- counted in N_eval/shots column because the PDF baseline
-    # spec says "same total shot budget".
+    # spec asks for a shot-budget comparison. We use the full 5000-shot
+    # assignment cap, which is conservative against Q-Tabu's 3578 Q evals.
     s = idx_to_spins(rand_res.best_idx, N)
     F = merit_factor(s); r = F / F_ref
     print(f"  {'Baseline: ' + rand_res.name.lower():22s}  "
           f"{rand_res.best_E:>6d}  {F:>7.4f}  {r:>6.4f}  "
           f"{rand_res.n_eval:>12d}  {rand_res.wall_time:>8.2f}"
-          f"   [shot-budget baseline]")
+          f"   [full 5000-shot budget]")
 
     # SA -- purely classical: N/A in the quantum budget column.
     s = idx_to_spins(sa_res.best_idx, N)
@@ -1439,7 +1443,7 @@ is the only quantum-bearing pipeline that meets the assignment target
 r >= 0.85, hitting the global optimum E* = 26 (r = 1.0000) within
 N_eval_quantum = 3578 <= 5000; the naive low-depth QAOA (Strategy 1)
 plateaus at E = 38 (r = 0.684) and is in fact beaten by uniform random
-sampling under the same shot budget (E = 34, r = 0.765), confirming
+sampling under the full allowed 5000-shot budget (E = 34, r = 0.765), confirming
 the PDF benchmark text that flags shallow QAOA as a weak baseline on
 LABS at N = 20.
 
@@ -1461,8 +1465,9 @@ concentrate ~3000 unique low-E candidates with E in [38, 58], a far
 better basin coverage than uniform random which produces seeds with
 mean energy ~ N(N-1)/2 = 190 -- and (ii) the *Tabu neighbourhood
 radius*: lifting from 1-flip to 1+2-flip is what crosses the gap
-between r = 0.765 and r = 1.0, exactly the schema of Cadavid et al.
-(arXiv:2511.04553, Ref [6]).  Cost accounting matters too: the same
+between r = 0.765 and r = 1.0, while retaining the quantum-sampler-to-
+classical-local-search schema of Cadavid et al. (arXiv:2511.04553,
+Ref [6]).  Cost accounting matters too: the same
 classical SA on E(s) directly also reaches r = 1 in ~25k purely
 classical evals and 0.1 s wall time, so the genuine value of the
 hybrid is not raw speed at N = 20 but the demonstration that the
