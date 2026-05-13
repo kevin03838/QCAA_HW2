@@ -1,0 +1,31 @@
+HW2 Problem 2 results (seed=10903838)
+Graph: n=8, m=16
+Edges: [(0, 2), (0, 3), (0, 5), (1, 2), (1, 4), (1, 5), (1, 6), (2, 3), (2, 5), (2, 7), (3, 5), (3, 6), (4, 5), (4, 6), (4, 7), (5, 7)]
+
+(a) Brute-force max cut = 12
+    Number of unique optimal partitions = 2
+      (0, 0, 1, 0, 0, 1, 1, 0)
+      (0, 0, 1, 0, 1, 1, 1, 0)
+    brute-force compute time (excl. plotting) = 0.000000s
+
+(b) p=1 landscape: max F = 9.8271 at (gamma,beta)=(5.7703,2.8210)
+    landscape min F = 4.4861
+    optimizer reliability: 20/50 random p=1 starts converged within tol=0.1 of global max
+
+(c) QAOA results:
+  p=1: <H_C>=9.8387, mode cut=12/12 (r=1.0000), best-of-shots cut=12/12 (r=1.0000), gammas=[0.4724499167173329], betas=[1.8863836145126274], time=19.37s
+  p=2: <H_C>=10.4072, mode cut=12/12 (r=1.0000), best-of-shots cut=12/12 (r=1.0000), gammas=[0.651917375319157, 6.0920825487750605], betas=[1.1746169759930443, 2.315917328832186], time=29.76s
+  p=3: <H_C>=10.6828, mode cut=12/12 (r=1.0000), best-of-shots cut=12/12 (r=1.0000), gammas=[5.736778800198139, 0.13209771132689552, 1.2628424452134723], betas=[0.5359659811229541, 0.7589424391162072, 1.7491318841013286], time=43.19s
+  p=4: <H_C>=10.8367, mode cut=12/12 (r=1.0000), best-of-shots cut=12/12 (r=1.0000), gammas=[5.908356094458455, 3.027457736357521, 2.5735027573456706, 1.0576907716785444], betas=[2.577577214464122, -0.025293564554677475, 1.373661698688095, 3.3339748193032808], time=55.88s
+
+(d) SA: cut=12/12 (r=1.0000), time=0.10s
+
+Comparison table:
+| Method                      | Best cut | Approx ratio | Time (s) |
+|-----------------------------|----------|--------------|----------|
+| Classical brute-force       |       12 |        1.000 |   <0.001 |
+| Simulated annealing         |       12 |        1.000 |   0.1002 |
+| QAOA p=1 (best-of-shots)     |       12 |        1.000 |  19.3736 |
+| QAOA p=2 (best-of-shots)     |       12 |        1.000 |  29.7559 |
+| QAOA p=3 (best-of-shots)     |       12 |        1.000 |  43.1916 |
+| QAOA p=4 (best-of-shots)     |       12 |        1.000 |  55.8797 |

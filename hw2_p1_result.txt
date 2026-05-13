@@ -1,0 +1,35 @@
+HW2 Problem 1 - 01 Knapsack QUBO results (seed = 10903838)
+======================================================================
+
+(a) Classical brute-force
+  x*         = [1, 1, 1, 1, 0, 1, 0, 0, 0, 0]
+  items      = [1, 2, 3, 4, 6]
+  weight     = 165
+  value      = 309
+  time (s)   = 0.002492
+
+QUBO construction:
+  variables  = 18 (items=10 + slack=8)
+  slack coef = [1, 2, 4, 8, 16, 32, 64, 38] (sum = W = 165)
+
+(b) ExactSolver sweep over lambda
+  lambda |        x (items only)        |  w  |  v  | feas | energy  | time(s)
+    0.01 | [1, 1, 1, 1, 1, 1, 0, 0, 0, 0] | 218 | 369 |  N  | -340.91 | 0.281
+    0.10 | [1, 1, 1, 1, 0, 1, 0, 0, 0, 0] | 165 | 309 |  Y  | -309.00 | 0.342
+    1.00 | [1, 1, 1, 1, 0, 1, 0, 0, 0, 0] | 165 | 309 |  Y  | -309.00 | 0.290
+    5.00 | [1, 1, 1, 1, 0, 1, 0, 0, 0, 0] | 165 | 309 |  Y  | -309.00 | 0.302
+   20.00 | [1, 1, 1, 1, 0, 1, 0, 0, 0, 0] | 165 | 309 |  Y  | -309.00 | 0.281
+  100.00 | [1, 1, 1, 1, 0, 1, 0, 0, 0, 0] | 165 | 309 |  Y  | -309.00 | 0.275
+
+(c) SimulatedAnnealingSampler (lambda = 10.0)
+  num_reads | P(optimal) | P(feasible) | best v | best w | time(s)
+         10 |     0.0000 |      1.0000 |    234 |    157 | 0.004
+        100 |     0.0000 |      0.9500 |    284 |    161 | 0.027
+       1000 |     0.0010 |      0.9640 |    309 |    165 | 0.251
+      10000 |     0.0036 |      0.9684 |    309 |    165 | 2.487
+
+(d) Comparison
+  method        |  v  |  w  | feas | time(s)
+  brute-force   | 309 | 165 |  Y  | 0.0025
+  exact QUBO    | 309 | 165 |  Y  | 0.2803  (lambda=10.0)
+  sim. anneal   | 309 | 165 |  Y  | 2.4867  (num_reads=10000)
